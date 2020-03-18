@@ -14,7 +14,8 @@ const logger = (req, res, next) => {
 const validateUserId = async (req, res, next) => {
     const { id } = req.params;
 
-    const usersArray = await users.get().then(resp => resp);
+    const usersArray = await users.get();
+    console.log("usersArray: ", usersArray);
     const userIndex = usersArray.findIndex(user => parseInt(id) === user.id);
 
     if (userIndex > -1) {
