@@ -63,4 +63,26 @@ server.post("/", (req, res) => {
         );
 });
 
+server.put("/:id", (req, res) => {
+    const { id } = req.params;
+    const updatedUser = req.body;
+
+    users
+        .update(id, updatedUser)
+        .then(response => {
+            response === 1
+                ? res
+                      .status(200)
+                      .json(`Successfully updated user with id ${id}`)
+                : res.status(404).json({
+                      errorMessage: `User with id ${id} does not exist`
+                  });
+        })
+        .catch(err =>
+            res
+                .status(500)
+                .json({ errorMessage: `Error updating user with id ${id}` })
+        );
+});
+
 server.listen(port, () => console.log(`Server listening on port ${port}`));
