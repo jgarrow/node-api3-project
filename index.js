@@ -1,9 +1,11 @@
 // code away!
 const express = require("express");
+const users = require("./users/userDb");
+const posts = require("./posts/postDb");
 
 const server = express();
 const port = 5000;
-const users = require("./users/userDb");
+const baseUrl = "/";
 
 const logger = (req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} to ${req.url}`);
@@ -31,6 +33,16 @@ const validateUser = (req, res, next) => {
         res.status(400).json({ errorMessage: "Missing user data" });
     } else if (!req.body.name) {
         res.status(400).json({ errorMessage: "Missing required name field" });
+    } else {
+        next();
+    }
+};
+
+const validatePost = (req, res, next) => {
+    if (!req.body || Object.keys(req.body).length === 0) {
+        res.status(400).json({ errorMessage: "Missing post data" });
+    } else if (!req.body.text) {
+        res.status(400).json({ errorMessage: "Missing required text field" });
     } else {
         next();
     }
@@ -67,6 +79,19 @@ server.get("/:id", validateUserId, (req, res) => {
         );
 });
 
+server.get("/:id/posts", validateUserId, (req, res) => {
+    const { id } = req.params;
+
+    users
+        .getUserPosts(id)
+        .then(resp => res.status(200).send(resp))
+        .catch(err =>
+            res
+                .status(500)
+                .json({ errorMessage: `Error retrieving posts for user ${id}` })
+        );
+});
+
 server.post("/", validateUser, (req, res) => {
     const newUser = req.body;
 
@@ -76,6 +101,21 @@ server.post("/", validateUser, (req, res) => {
         .catch(err =>
             res.status(500).json({ errorMessage: "Error adding new user" })
         );
+});
+
+server.post("/:id/posts", validateUserId, validatePost, (req, res) => {
+    const { id } = req.params;
+
+    const newPost = { ...req.body, user_id: id };
+    console.log("newPost: ", newPost);
+
+    posts
+        .insert(newPost)
+        .then(resp => res.status(201).send(resp))
+        .catch(err => {
+            console.log("err: ", err);
+            res.status(500).json({ errorMessage: "Error adding post" });
+        });
 });
 
 server.put("/:id", validateUserId, (req, res) => {
