@@ -34,21 +34,32 @@ server.get("/:id", (req, res) => {
 
     users
         .getById(id)
-        .then(response => {
-            console.log("response: ", response);
-
-            if (response) {
-                res.status(200).send(response);
-            } else {
-                res.status(404).json({
-                    errorMessage: `User with id ${id} was not found`
-                });
-            }
-        })
+        .then(response =>
+            response // response is undefined if no user with the id is found
+                ? res.status(200).send(response)
+                : res.status(404).json({
+                      errorMessage: `User with id ${id} was not found`
+                  })
+        )
         .catch(err =>
             res
                 .status(500)
                 .json({ errorMessage: `Error retrieving user of id ${id}` })
+        );
+});
+
+server.post("/", (req, res) => {
+    const newUser = req.body;
+
+    if (!newUser.name) {
+        res.status(404).json({ errorMessage: "Please give the user a name" });
+    }
+
+    users
+        .insert(newUser)
+        .then(response => res.status(201).send(response))
+        .catch(err =>
+            res.status(500).json({ errorMessage: "Error adding new user" })
         );
 });
 
