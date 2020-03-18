@@ -85,4 +85,27 @@ server.put("/:id", (req, res) => {
         );
 });
 
+server.delete("/:id", (req, res) => {
+    const { id } = req.params;
+
+    users
+        .remove(id)
+        .then(response => {
+            response === 1
+                ? res
+                      .status(200)
+                      .send(`Successfully deleted user with id ${id}`)
+                : res
+                      .status(404)
+                      .json({
+                          errorMessage: `User with id ${id} could not be found`
+                      });
+        })
+        .catch(err =>
+            res
+                .status(500)
+                .json({ errorMessage: `Error removing user with id ${id}` })
+        );
+});
+
 server.listen(port, () => console.log(`Server listening on port ${port}`));
