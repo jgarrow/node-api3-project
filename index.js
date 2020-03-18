@@ -11,10 +11,20 @@ const logger = (req, res, next) => {
     next();
 };
 
-const validateUserId = (req, res, next) => {
+const validateUserId = async (req, res, next) => {
     const { id } = req.params;
+    console.log("users: ", users);
+    console.log("typeof users: ", typeof users);
 
-    next();
+    const usersArray = await users.get().then(resp => resp);
+    const userIndex = usersArray.findIndex(user => parseInt(id) === user.id);
+
+    if (userIndex > -1) {
+        req.user = usersArray[userIndex];
+        next();
+    } else {
+        res.status(400).json({ errorMessage: "Invalid user id" });
+    }
 };
 
 server.use(express.json());
@@ -29,7 +39,7 @@ server.get("/", (req, res) => {
         );
 });
 
-server.get("/:id", (req, res) => {
+server.get("/:id", validateUserId, (req, res) => {
     const { id } = req.params;
 
     users
@@ -63,7 +73,7 @@ server.post("/", (req, res) => {
         );
 });
 
-server.put("/:id", (req, res) => {
+server.put("/:id", validateUserId, (req, res) => {
     const { id } = req.params;
     const updatedUser = req.body;
 
@@ -85,7 +95,7 @@ server.put("/:id", (req, res) => {
         );
 });
 
-server.delete("/:id", (req, res) => {
+server.delete("/:id", validateUserId, (req, res) => {
     const { id } = req.params;
 
     users
@@ -95,11 +105,9 @@ server.delete("/:id", (req, res) => {
                 ? res
                       .status(200)
                       .send(`Successfully deleted user with id ${id}`)
-                : res
-                      .status(404)
-                      .json({
-                          errorMessage: `User with id ${id} could not be found`
-                      });
+                : res.status(404).json({
+                      errorMessage: `User with id ${id} could not be found`
+                  });
         })
         .catch(err =>
             res
