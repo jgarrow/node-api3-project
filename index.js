@@ -13,8 +13,6 @@ const logger = (req, res, next) => {
 
 const validateUserId = async (req, res, next) => {
     const { id } = req.params;
-    console.log("users: ", users);
-    console.log("typeof users: ", typeof users);
 
     const usersArray = await users.get().then(resp => resp);
     const userIndex = usersArray.findIndex(user => parseInt(id) === user.id);
@@ -24,6 +22,16 @@ const validateUserId = async (req, res, next) => {
         next();
     } else {
         res.status(400).json({ errorMessage: "Invalid user id" });
+    }
+};
+
+const validateUser = (req, res, next) => {
+    if (!req.body || Object.keys(req.body).length === 0) {
+        res.status(400).json({ errorMessage: "Missing user data" });
+    } else if (!req.body.name) {
+        res.status(400).json({ errorMessage: "Missing required name field" });
+    } else {
+        next();
     }
 };
 
@@ -58,12 +66,8 @@ server.get("/:id", validateUserId, (req, res) => {
         );
 });
 
-server.post("/", (req, res) => {
+server.post("/", validateUser, (req, res) => {
     const newUser = req.body;
-
-    if (!newUser.name) {
-        res.status(404).json({ errorMessage: "Please give the user a name" });
-    }
 
     users
         .insert(newUser)
